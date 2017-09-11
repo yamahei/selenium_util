@@ -8,6 +8,7 @@ class Browser
         @retry = option[:retry] || 3 
         @timeout = option[:timeout] || 10
         @moment = option[:moment] || 0.5
+        @op_splitter = option[:op_splitter] || ";"
         #@headless = option[:headless] || true#TODO
     end
     def method_missing(method, *args)
@@ -15,6 +16,9 @@ class Browser
     end
     def navigate url, timeout=@timeout
         @me.navigate.to url
+        wait_until_transfer url, timeout
+    end
+    def wait_until_transfer url, timeout=@timeout, moment=@moment
         while true
             if url.kind_of?(Regexp) then
                 return if @me.current_url =~ url
@@ -24,37 +28,75 @@ class Browser
             sleep @moment
             timeout -= @moment
             if timeout <= 0 then
-                raise StandardError.new 'Navigation timeout.'
+                raise StandardError.new 'waiting transfer timeout.'
             end
         end
     end
-    def find how, query, target=@me
-        @retry.times{
-            begin; return target.find_element how, query
-            rescue; sleep @moment
+    def find how, query, target=@me, retry=@retry, moment=@moment
+        retry.times{
+            begin; return target.find_element how.to_sym, query
+            rescue; sleep moment
             end
         }
     end
-    def finds how, query, target=@me
-        @retry.times{
+    def finds how, query, target=@me, retry=@retry, moment=@moment
+        retry.times{
             begin; return target.find_elements how, query
-            rescue; sleep @moment
+            rescue; sleep moment
             end
         }
     end
+    def set_value element, value#=>void
+        tagname = element.tag_name
+        case tagname
+        when 'input' then
+            type = element.attribute('type')
+            if ['text', 'file'].include?(type) then
+                element.send_keys value
+            else
+                raise StandardError.new "unknown input type of: #{type}."
+            end
+        when 'select' then
+            Selenium::WebDriver::Support::Select.new(element).select_by(:value, value)            
+        when 'textarea' then
+            element.text = value
+        else
+            raise StandardError.new "unknown tagname of: #{tagname}."
+        end
+    end 
 
     def line_operations operations
-        operations.split(";").each{|operation|
-            _cmd, _how, _query, _value = *operation.split(":")
-            _element = find(_how.to_sym, _query)
+        operations.each{|operation|
+            _cmd, _arg1, _arg2, _arg3, _arg4, _arg5 = *operation.split(";")
             case _cmd
-            when "c" then;_element.click
-            when "v" then;#TODO: set value
-            when "w" then;#TODO: wait [url|how:query:[show|hide]]
+            when "c" then#click: how, query [, url]
+                how, query, url = _arg1, _arg2, _arg3
+                element = find(how, query)
+                element.click
+                wait_until_transfer(url) unless (url || "").empty?
+            when "s" then#set value: how, query, value
+                how, query, value = _arg1, _arg2, _arg3
+                element = find(how, query)
+                set_value element, value
+            when "n" then;#navigation url
+                url = _arg1
+                navigate url
+            when "t" then;#wait_transfer url
+                url = _arg1
+                wait_until_transfer url
+            when "d" then;#dialog: ok|cancel [, prompt_msg]
+                click, prompt, url = _arg1, _arg2, _arg3
+                dialog = @me.switch_to.alert
+                dialog.send_keys(prompt) unless (prompt || "").empty?
+                dialog.accept if click.to_sym == :ok
+                dialog.dismiss if click.to_sym == :cancel
+                wait_until_transfer(url) unless (url || "").empty?
             else;#TODO: error
+                raise StandardError.new "unknown operation of: #{operation}."
             end
             sleep @moment
         }
     end
+
 end#class
 end#module
