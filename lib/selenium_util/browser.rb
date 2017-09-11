@@ -68,6 +68,7 @@ class Browser
 
     def line_operations operations
         operations.each{|operation|
+            puts "line_operation::#{operation}"
             _cmd, _arg1, _arg2, _arg3, _arg4, _arg5 = *operation.split(";")
             case _cmd
             when "c" then#click: how, query [, url]
