@@ -1,4 +1,4 @@
-example_id                        | status | run_time        |
---------------------------------- | ------ | --------------- |
-./spec/selenium_util_spec.rb[1:1] | passed | 0.00202 seconds |
-./spec/selenium_util_spec.rb[1:2] | failed | 0.06739 seconds |
+example_id                        | status | run_time      |
+--------------------------------- | ------ | ------------- |
+./spec/selenium_util_spec.rb[1:1] | passed | 0.002 seconds |
+./spec/selenium_util_spec.rb[1:2] | passed | 4.9 seconds   |

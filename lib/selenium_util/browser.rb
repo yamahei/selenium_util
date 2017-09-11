@@ -1,5 +1,4 @@
-require 'bundler'
-Bundler.require
+require 'selenium-webdriver'
 
 module SeleniumUtil
 class Browser

@@ -5,7 +5,9 @@ RSpec.describe SeleniumUtil do
     expect(SeleniumUtil::VERSION).not_to be nil
   end
 
-  it "does something useful" do
-    expect(false).to eq(true)
+  it "initialize" do
+    u = SeleniumUtil::Browser.new :chrome
+    expect(u.class).to eq(SeleniumUtil::Browser)
+    u.quit
   end
 end
