@@ -32,19 +32,19 @@ class Browser
             end
         end
     end
-    def find how, query, target=@me, retry=@retry, moment=@moment
-        retry.times{
+    def find how, query, target=@me, _retry=@retry, moment=@moment
+        _retry.times do
             begin; return target.find_element how.to_sym, query
             rescue; sleep moment
             end
-        }
+        end
     end
-    def finds how, query, target=@me, retry=@retry, moment=@moment
-        retry.times{
+    def finds how, query, target=@me, _retry=@retry, moment=@moment
+        _retry.times do
             begin; return target.find_elements how, query
             rescue; sleep moment
             end
-        }
+        end
     end
     def set_value element, value#=>void
         tagname = element.tag_name
@@ -78,13 +78,13 @@ class Browser
                 how, query, value = _arg1, _arg2, _arg3
                 element = find(how, query)
                 set_value element, value
-            when "n" then;#navigation url
+            when "n" then#navigation url
                 url = _arg1
                 navigate url
-            when "t" then;#wait_transfer url
+            when "t" then#wait_transfer url
                 url = _arg1
                 wait_until_transfer url
-            when "d" then;#dialog: ok|cancel [, prompt_msg]
+            when "d" then#dialog: ok|cancel [, prompt_msg]
                 click, prompt, url = _arg1, _arg2, _arg3
                 dialog = @me.switch_to.alert
                 dialog.send_keys(prompt) unless (prompt || "").empty?
