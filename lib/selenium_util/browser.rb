@@ -37,6 +37,7 @@ class Browser
             rescue; sleep moment
             end
         end
+        raise StandardError.new "element not found: #{query}."
     end
     def finds how, query, target=@me, _retry=@retry, moment=@moment
         _retry.times do
@@ -44,13 +45,14 @@ class Browser
             rescue; sleep moment
             end
         end
+        raise StandardError.new "elements not found: #{query}."
     end
     def set_value element, value#=>void
         tagname = element.tag_name
         case tagname
         when 'input' then
             type = element.attribute('type')
-            if ['text', 'file'].include?(type) then
+            if ['text', 'password', 'file'].include?(type) then
                 element.send_keys value
             else
                 raise StandardError.new "unknown input type of: #{type}."
