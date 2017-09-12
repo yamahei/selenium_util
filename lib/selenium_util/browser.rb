@@ -36,7 +36,7 @@ class Browser
             begin
                 _element = target.find_element how.to_sym, query
                 return _element if _element.displayed?
-            rescue; end
+            rescue=>e; 1; end
             sleep moment
         end
         raise StandardError.new "element not found: #{query}."
@@ -46,7 +46,7 @@ class Browser
             begin
                 _elements = target.find_elements how, query
                 return _elements if _elements.all?{|e| e.displayed? }
-            rescue; end
+            rescue=>e; 1; end
             sleep moment
         end
         raise StandardError.new "elements not found: #{query}."
