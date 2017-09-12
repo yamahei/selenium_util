@@ -36,20 +36,24 @@ class Browser
             begin
                 _element = target.find_element how.to_sym, query
                 return _element if _element.displayed?
-            rescue=>e; 1; end
+            rescue=>e
+                sleep moment
+            end
             sleep moment
         end
-        raise StandardError.new "element not found: #{query}."
+        raise StandardError.new "element not found."
     end
     def finds how, query, target=@me, _retry=@retry, moment=@moment
         _retry.times do
             begin
                 _elements = target.find_elements how, query
                 return _elements if _elements.all?{|e| e.displayed? }
-            rescue=>e; 1; end
+            rescue=>e
+                sleep moment
+            end
             sleep moment
         end
-        raise StandardError.new "elements not found: #{query}."
+        raise StandardError.new "elements not found."
     end
     def set_value element, value#=>void
         tagname = element.tag_name
