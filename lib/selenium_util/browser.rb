@@ -8,7 +8,6 @@ class Browser
         @timeout = option[:timeout] || 10
         @moment = option[:moment] || 0.5
         @op_splitter = option[:op_splitter] || ";"
-        #@headless = option[:headless] || true#TODO
     end
     def method_missing(method, *args)
         @me.send(method, *args)
@@ -17,41 +16,41 @@ class Browser
         @me.navigate.to url
         wait_until_transfer url, timeout
     end
-    def wait_until_transfer url, timeout=@timeout, moment=@moment
+    def wait_until_transfer url, timeout=@timeout, _moment=@moment
         while true
             if url.kind_of?(Regexp) then
                 return if @me.current_url =~ url
             else
                 return if @me.current_url == url
             end
-            sleep @moment
-            timeout -= @moment
+            sleep _moment
+            timeout -= _moment
             if timeout <= 0 then
                 raise StandardError.new 'waiting transfer timeout.'
             end
         end
     end
-    def find how, query, target=@me, _retry=@retry, moment=@moment
+    def find how, query, target=@me, _retry=@retry, _moment=@moment
         _retry.times do
             begin
                 _element = target.find_element how.to_sym, query
                 return _element if _element.displayed?
             rescue=>e
-                sleep moment
+                sleep _moment
             end
-            sleep moment
+            sleep _moment
         end
         raise StandardError.new "element not found."
     end
-    def finds how, query, target=@me, _retry=@retry, moment=@moment
+    def finds how, query, target=@me, _retry=@retry, _moment=@moment
         _retry.times do
             begin
                 _elements = target.find_elements how, query
                 return _elements if _elements.all?{|e| e.displayed? }
             rescue=>e
-                sleep moment
+                sleep _moment
             end
-            sleep moment
+            sleep _moment
         end
         raise StandardError.new "elements not found."
     end
@@ -77,8 +76,8 @@ class Browser
     def line_operations operations
         operations.each{|operation|
             puts "line_operation::#{operation}"
-            _cmd, _arg1, _arg2, _arg3, _arg4, _arg5 = *operation.split(";")
-            case _cmd
+            _cmd, _arg1, _arg2, _arg3 = *operation.split(";")
+            case _cmd.downcase
             when "c" then#click: how, query [, url]
                 how, query, url = _arg1, _arg2, _arg3
                 element = find(how, query)
@@ -94,7 +93,7 @@ class Browser
             when "t" then#wait_transfer url
                 url = _arg1
                 wait_until_transfer url
-            when "d" then#dialog: ok|cancel [, prompt_msg]
+            when "d" then#dialog: :ok|:cancel [, prompt_msg]
                 click, prompt, url = _arg1, _arg2, _arg3
                 dialog = @me.switch_to.alert
                 dialog.send_keys(prompt) unless (prompt || "").empty?
