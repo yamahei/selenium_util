@@ -67,7 +67,8 @@ class Browser
         when 'select' then
             Selenium::WebDriver::Support::Select.new(element).select_by(:value, value)            
         when 'textarea' then
-            element.text = value
+            #element.text = value
+            element.send_keys value
         else
             raise StandardError.new "unknown tagname of: #{tagname}."
         end
@@ -76,36 +77,49 @@ class Browser
     def line_operations operations
         operations.each{|operation|
             puts "line_operation::#{operation}"
-            _cmd, _arg1, _arg2, _arg3 = *operation.split(";")
-            case _cmd.downcase
-            when "c" then#click: how, query [, url]
-                how, query, url = _arg1, _arg2, _arg3
-                element = find(how, query)
-                element.click
-                wait_until_transfer(url) unless (url || "").empty?
-            when "s" then#set value: how, query, value
-                how, query, value = _arg1, _arg2, _arg3
-                element = find(how, query)
-                set_value element, value
-            when "n" then#navigation url
-                url = _arg1
-                navigate url
-            when "t" then#wait_transfer url
-                url = _arg1
-                wait_until_transfer url
-            when "d" then#dialog: :ok|:cancel [, prompt_msg]
-                click, prompt, url = _arg1, _arg2, _arg3
-                dialog = @me.switch_to.alert
-                dialog.send_keys(prompt) unless (prompt || "").empty?
-                dialog.accept if click.to_sym == :ok
-                dialog.dismiss if click.to_sym == :cancel
-                wait_until_transfer(url) unless (url || "").empty?
-            else;#TODO: error
-                raise StandardError.new "unknown operation of: #{operation}."
+            _e = nil
+            @retry.times do
+                begin
+                    _line_operations operation
+                    break
+                rescue=>e
+                    p (_e = e)
+                    sleep @moment
+                end
             end
-            sleep @moment
+            raise _e if _e
         }
     end
+    def _line_operations operation
+        _cmd, _arg1, _arg2, _arg3 = *operation.split(";")
+        case _cmd.downcase
+        when "c" then#click: how, query [, url]
+            how, query, url = _arg1, _arg2, _arg3
+            element = find(how, query)
+            element.click
+            wait_until_transfer(url) unless (url || "").empty?
+        when "s" then#set value: how, query, value
+            how, query, value = _arg1, _arg2, _arg3
+            element = find(how, query)
+            set_value element, value
+        when "n" then#navigation url
+            url = _arg1
+            navigate url
+        when "t" then#wait_transfer url
+            url = _arg1
+            wait_until_transfer url
+        when "d" then#dialog: :ok|:cancel [, prompt_msg]
+            click, prompt, url = _arg1, _arg2, _arg3
+            dialog = @me.switch_to.alert
+            dialog.send_keys(prompt) unless (prompt || "").empty?
+            dialog.accept if click.to_sym == :ok
+            dialog.dismiss if click.to_sym == :cancel
+            wait_until_transfer(url) unless (url || "").empty?
+        else;#TODO: error
+            raise StandardError.new "unknown operation of: #{operation}."
+        end
+        sleep @moment
+end
 
 end#class
 end#module
